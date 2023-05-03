@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerAnim : MonoBehaviour
 {
     [SerializeField]
-    private Animator animator;
+    Animator animator;
 
     public void Jump()
     {
@@ -26,6 +26,11 @@ public class PlayerAnim : MonoBehaviour
     {
         animator.SetBool("IsWalking", false);
         animator.SetBool("IsRunning", true);
+    }
+
+    public void Death()
+    {
+        animator.SetBool("IsDead", true);
     }
 
     public void Attack()

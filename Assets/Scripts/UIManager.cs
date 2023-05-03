@@ -1,47 +1,65 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 
-public class UIManager : MonoBehaviour
+public class UIManager : SingletonMonoBehaviour<UIManager>
 {
-    [SerializeField]
-    private TMP_Text score;
-    [SerializeField]
-    private TMP_Text tooltip;
-    [SerializeField]
-    private Player character;
-    [SerializeField]
-    private TMP_Text enemyKillCount;
+    [SerializeField] TMP_Text score;
+    [SerializeField] TMP_Text tooltip;
+    [SerializeField] TMP_Text enemyKillCount;
+    [SerializeField] RectTransform retryOrQuitTransform;
+    [SerializeField] HealthUI healthUI;
+    [SerializeField] UnityEvent onOpenEscapeMenu;
+    [SerializeField] UnityEvent onCloseEscapeMenu;
 
-    public static UIManager Instance;
+    public HealthUI HealthUI => healthUI;
 
-    // Start is called before the first frame update
-    void Start()
+    protected override void Awake()
     {
-        Instance = this;
+        base.Awake();
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        score.SetText($"{character.Score}");
-        enemyKillCount.SetText($"Nombre d'ennemis tués : {character.EnemyKillCount}");
-
-        if (character.ClosestChest != null && character.ClosestChest.CanLoot)
+        var escape = Input.GetKeyDown(KeyCode.Escape);
+        if (escape)
         {
-            tooltip.SetText("Appuie sur [E] pour looter le coffre");
-            tooltip.color = Color.white;
+            var bRetryOrQuitTransform = retryOrQuitTransform.gameObject.activeSelf;
+            Cursor.visible = !bRetryOrQuitTransform;
+            Cursor.lockState = !bRetryOrQuitTransform ? CursorLockMode.None : CursorLockMode.Locked;
+            DisplayRestartOrQuitMenu(!bRetryOrQuitTransform);
         }
     }
 
-    public void SetTooltip(string str, Color color)
+    public void SetScore(int _score)
     {
-        tooltip.SetText(str);
-        tooltip.color = color;
+        print(score == null);
+        score.SetText(_score.ToString());
     }
 
-    public void SetTooltip(string str)
+    public void SetKillCount(int _value) => enemyKillCount.SetText($"Nombre d'ennemis tués : {_value}");
+
+    public void SetTooltip(string _str, Color _color = default)
     {
-        tooltip.SetText(str);
+        if (_color != default)
+        {
+            tooltip.color = _color;
+        }
         tooltip.color = Color.white;
+        tooltip.SetText(_str);
+    }
+
+    public void SetPlayerHealthText()
+    {
+        healthUI.SetHealthText();
+    }
+
+    public void DisplayRestartOrQuitMenu(bool _flag)
+    {
+        retryOrQuitTransform.gameObject.SetActive(_flag);
+        if (_flag) onOpenEscapeMenu?.Invoke();
+        else onCloseEscapeMenu?.Invoke();
     }
 }

@@ -2,17 +2,15 @@
 
 public interface IEntity
 {
-    bool CanAttackTarget(IEntity entity);
+    bool CanAttackTarget(IEntity _entity, out int _damageValue);
 
-    void AttackTarget(IEntity entity);
+    void AttackTarget(int _damageValue);
 
-    void Damage(int damage);
+    void Damage(int _damage);
 
     void Death();
 
     int Health { get; set; }
-
-    bool IsAlive => !IsDead;
 
     bool IsDead { get; }
 

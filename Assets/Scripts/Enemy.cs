@@ -1,35 +1,47 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 using UnityEngine.AI;
 
 public class Enemy : Entity
 {
-    private Animator animator;
-    private NavMeshAgent agent;
-    private bool walk;
-    private BoxCollider boxCollider;
+    Animator animator;
+    NavMeshAgent agent;
+    BoxCollider boxCollider;
+    Rigidbody rb;
+    DateTime attackDateTime = new DateTime();
+    [SerializeField] Zone zone;
+    [SerializeField] int patrolWalkRadius;
 
-    // Start is called before the first frame update
+    IEnumerator patrolCoroutine;
+
     void Start()
     {
         animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
         boxCollider = GetComponent<BoxCollider>();
+        rb = GetComponent<Rigidbody>();
+        if (zone.Entities == null) zone.Entities = new List<Entity>();
+        zone.Entities.Add(this);
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (IsDead) return;
         if (Target != null)
         {
-            if (walk)
+            animator.SetBool("IsWalk", true);
+            if (CanAttackTarget(Target, out int damageValue))
             {
-                animator.SetBool("IsWalk", walk);
-            }
-            if (CanAttackTarget(Target))
-            {
-                agent.isStopped = true;
-                AttackTarget(Target);
+                transform.LookAt(Target.Position);
+                if (DateTime.Compare(DateTime.UtcNow.AddSeconds(-4), attackDateTime) > 0)
+                {
+                    agent.isStopped = true;
+                    AttackTarget(damageValue);
+                    attackDateTime= DateTime.UtcNow;
+                }
             }
             else
             {
@@ -41,14 +53,38 @@ public class Enemy : Entity
         else
         {
             agent.isStopped = false;
-            agent.SetDestination(Position);
+            if (patrolCoroutine == null)
+            {
+                patrolCoroutine = Patrol();
+                StartCoroutine(patrolCoroutine);
+            }
         }
     }
 
-    public override void AttackTarget(IEntity _entity)
+    IEnumerator Patrol()
+    {   
+        Vector3 randomDirection = Random.insideUnitSphere * patrolWalkRadius;
+        randomDirection += Position;
+        if (NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, patrolWalkRadius, 1))
+        {
+            agent.SetDestination(hit.position);
+            yield return new WaitForSeconds(Random.Range(10, 20));
+            agent.isStopped = true;
+            patrolCoroutine = null;
+        }
+    }
+
+    public override void AttackTarget(int _damageValue)
     {
-        base.AttackTarget(_entity);
         animator.SetTrigger("Attack");
+    }
+
+    public virtual void DamageTarget()
+    {
+        if (Target != null && CanAttackTarget(Target, out int damageValue))
+        {
+            Target.Damage(damageValue);
+        }
     }
 
     public override void Damage(int _value)
@@ -59,24 +95,34 @@ public class Enemy : Entity
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponent<Player>() == null) return;
-        Target = other.GetComponent<Player>();
-        Target.Target = this;
-        walk = true;
+        if (other.TryGetComponent(out Coin coin))
+        {
+            Destroy(coin.gameObject);
+        }
+        else if (other.TryGetComponent(out Player player))
+        {
+            Target = player;
+            Target.Target = this;
+        }
     }
 
     void OnTriggerExit(Collider other)
     {
-        Target.Target = null;
+        if (Target != null) Target.Target = null;
         Target = null;
-        walk = false;
-        animator.SetBool("IsWalk", walk);
+        animator.SetBool("IsWalk", false);
         animator.SetTrigger("Idle");
     }
 
     public override void Death()
     {
         animator.SetBool("IsDead", true);
+        rb.velocity = new Vector3(0, 0, 0);
         boxCollider.enabled = false;
+        zone.NumbOfEnemyToKill--;
+        if (zone.NumbOfEnemyToKill <= 0)
+        {
+            zone.SwitchCamera();
+        }
     }
 }

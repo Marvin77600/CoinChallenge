@@ -1,26 +1,25 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Coin : MonoBehaviour
 {
-    [SerializeField]
-    private AudioSource audioSource;
-    [SerializeField]
-    private TypeEnum type;
+    [SerializeField] TypeEnum type;
+    [SerializeField] AudioClip audioClip;
 
-    private bool onGround;
-    private bool canElevate;
-    private Rigidbody rb;
-    private float baseElevation;
+    bool onGround;
+    bool canElevate;
+    Rigidbody rb;
+    float baseElevation;
 
     public TypeEnum Type => type;
 
-    private void Start()
+    void Start()
     {
         rb = GetComponent<Rigidbody>();
         canElevate = true;
     }
 
-    private void Update()
+    void Update()
     {
         if (onGround)
         {
@@ -29,39 +28,38 @@ public class Coin : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
+    void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.tag == "Coin")
+        if (collision.gameObject.tag.Equals("Coin"))
         {
-            print($"Destroy {collision.gameObject.name}");
             Destroy(collision.gameObject);
         }
-
-        if (collision.gameObject.tag == "Floor")
+        if (collision.gameObject.tag.Equals("Floor"))
         {
-            print("floor collision");
             Destroy(rb);
             baseElevation = transform.localPosition.y;
             onGround = true;
         }
+    }
 
-        if (collision.gameObject.tag == "Player")
+    void OnTriggerEnter(Collider collider)
+    {
+        if (collider.gameObject.TryGetComponent(out Player player))
         {
-            if (collision.gameObject.TryGetComponent(out Player c))
-            {
-                c.AddPoint(this);
-                Destroy(gameObject);
-            }
+            player.AddPoint(this);
+            UIManager.Instance.SetScore(player.Score);
+            //AudioSource.PlayClipAtPoint(audioClip, transform.position);
+            Destroy(gameObject);
         }
     }
 
-    private void Rotate()
+    void Rotate()
     {
         var rotation = transform.localEulerAngles;
         transform.localEulerAngles = new Vector3(rotation.x, rotation.y + 1, rotation.z);
     }
 
-    private void Elevate()
+    void Elevate()
     {
         if (canElevate)
         {

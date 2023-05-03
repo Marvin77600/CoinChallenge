@@ -4,27 +4,17 @@ namespace Assets.Scripts
 {
     public class CoinGenerator : MonoBehaviour
     {
+        [SerializeField] int count;
+        [SerializeField] Vector3 soPos, nePos;
         [SerializeField]
-        private Terrain terrain;
-        [SerializeField]
-        private int count;
-        [SerializeField]
-        private Vector3 soPos;
-        [SerializeField]
-        private Vector3 nePos;
-        [SerializeField]
-        private GameObject simpleCoin;
-        [SerializeField]
-        private GameObject rareCoin;
-        [SerializeField]
-        private GameObject superRareCoin;
+        GameObject simpleCoin, rareCoin, superRareCoin;
 
-        private void Start()
+        void Start()
         {
             SpawnCoins();
         }
 
-        private void SpawnCoins()
+        void SpawnCoins()
         {
             for (int i = 0; i < count; i++)
             {

@@ -2,38 +2,36 @@ using UnityEngine;
 
 public class BlockLootable : MonoBehaviour
 {
-    [SerializeField] private int moneyValue;
-    private bool looted = false;
-    private IInteractable interactable;
+    [SerializeField] int moneyValue;
 
-    public IInteractable Interactable { get { return interactable; } set { interactable = value; } }
+    public IInteractable Interactable { get; set; }
 
-    public bool Looted { get { return looted; } set { looted = value; } }
+    public bool Looted { get; set; }
     
     public int MoneyValue => moneyValue;
 
-    public bool CanLoot => !looted;
+    public bool CanLoot => !Looted;
 
     public virtual void Loot()
     {
         Looted = true;
-        if (interactable != null) interactable.DisplayTooltip(string.Empty);
+        if (Interactable != null) Interactable.DisplayTooltip(string.Empty);
     }
 
     void OnTriggerEnter(Collider other)
     {
-        interactable = other.GetComponent<IInteractable>();
-        if (interactable == null) return;
-        interactable.ClosestChest = this;
+        Interactable = other.GetComponent<IInteractable>();
+        if (Interactable == null) return;
+        Interactable.ClosestChest = this;
 
-        if (!looted)
-            interactable.DisplayTooltip("Appuie sur [E] pour looter le coffre");
+        if (!Looted)
+            Interactable.DisplayTooltip("Appuie sur [E] pour looter le coffre");
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (interactable == null) return;
-        interactable.DisplayTooltip(string.Empty);
-        interactable = null;
+        if (Interactable == null) return;
+        Interactable.DisplayTooltip(string.Empty);
+        Interactable = null;
     }
 }

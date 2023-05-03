@@ -7,8 +7,6 @@ public class Entity : MonoBehaviour, IEntity
 
     public int Health { get { return health; } set { health = value; } }
 
-    public bool IsAlive => !IsDead;
-
     public bool IsDead => health <= 0;
 
     public int DamageMelee => damageMelee;
@@ -17,19 +15,25 @@ public class Entity : MonoBehaviour, IEntity
 
     public IEntity Target { get; set; }
 
-    public virtual void AttackTarget(IEntity _entity)
+    public virtual void AttackTarget(int _damageValue)
     {
-        _entity.Damage(damageMelee);
-        if (_entity.Health <= 0) _entity.Death();
+        var target = Target as Entity;
+        var positionTarget = new Vector3(target.Position.x, 0, target.Position.z);
+        var position = new Vector3(Position.x, 0, Position.z);
+        if (Vector3.Dot(position, positionTarget) >= .5f) Target.Damage(_damageValue);
+        if (Target.Health <= 0) Target.Death();
     }
 
-    public virtual bool CanAttackTarget(IEntity _entity)
+    public virtual bool CanAttackTarget(IEntity _entity, out int _damageValue)
     {
         var entity = (Entity)_entity;
-        if (Vector3.Distance(entity.Position, Position) <= 4)
+        if (Vector3.Distance(entity.Position, Position) <= 4 && Vector3.Dot(Position, _entity.Position) >= .5f && !entity.IsDead)
         {
+            if (entity.Health < damageMelee) _damageValue = entity.Health;
+            else _damageValue = damageMelee;
             return true;
         }
+        _damageValue = 0;
         return false;
     }
 

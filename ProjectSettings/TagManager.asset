@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Floor
   - Coin
+  - Water
   layers:
   - Default
   - TransparentFX
@@ -14,7 +15,7 @@ TagManager:
   - Water
   - UI
   - Character
-  - 
+  - Character Collision Blocker
   - 
   - 
   - 
